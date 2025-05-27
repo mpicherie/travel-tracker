@@ -1,0 +1,13 @@
+# Fichiers sensibles
+config.php
+.env
+
+# Dossiers système
+/vendor/
+node_modules/
+*.log
+.DS_Store
+
+# Backup
+*.bak
+*.swp
