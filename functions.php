@@ -16,12 +16,11 @@ function generateToken($length = 32) {
 /**
  * Récupère les infos de retard pour un vol via l’API AviationStack
  */
-function getFlightDelayInfo($flight_number) {
-    $api_key = 'd1b2e1cdf243b1ebab47b119a3bd95dc'; // 🔐 Remplir ta clé API ici (https://aviationstack.com/)
-    if (empty($api_key)) return null;
+function getFlightDetails($flight_number) {
+    $api_key = 'd1b2e1cdf243b1ebab47b119a3bd95dc'; // ← Mets ta clé API AviationStack ici
+    if (!$api_key) return null;
 
     $url = "http://api.aviationstack.com/v1/flights?access_key=$api_key&flight_iata=" . urlencode($flight_number);
-
     $response = @file_get_contents($url);
     if (!$response) return null;
 
@@ -29,11 +28,19 @@ function getFlightDelayInfo($flight_number) {
     if (!isset($data['data'][0])) return null;
 
     $flight = $data['data'][0];
-    $scheduled = $flight['departure']['scheduled'] ?? 'Inconnu';
-    $actual = $flight['departure']['actual'] ?? 'Inconnu';
-    $delay = $flight['departure']['delay'] ?? 0;
 
-    return "Départ prévu : $scheduled\nDépart réel : $actual\nRetard : {$delay} minutes";
+    return [
+        'from'       => $flight['departure']['airport'] ?? '',
+        'to'         => $flight['arrival']['airport'] ?? '',
+        'from_code'  => $flight['departure']['iata'] ?? '',
+        'to_code'    => $flight['arrival']['iata'] ?? '',
+        'from_time'  => $flight['departure']['scheduled'] ?? '',
+        'to_time'    => $flight['arrival']['scheduled'] ?? '',
+        'delay'      => $flight['departure']['delay'] ?? 0,
+        'airline'    => $flight['airline']['name'] ?? '',
+        'status'     => $flight['flight_status'] ?? '',
+        'raw'        => $flight // pour logs ou analyse complète
+    ];
 }
 
 /**

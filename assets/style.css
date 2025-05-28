@@ -1,113 +1,33 @@
-/* Reset de base */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
 body {
-  font-family: "Segoe UI", "Roboto", sans-serif;
+  font-family: "Segoe UI", sans-serif;
   background-color: #f4f8fb;
   color: #333;
-  line-height: 1.6;
   padding: 2rem;
 }
-
 h2 {
-  margin-bottom: 1.5rem;
   color: #0077b6;
-  font-weight: 600;
 }
-
 form {
   background: white;
   max-width: 600px;
-  margin: 0 auto;
+  margin: auto;
   padding: 2rem;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
-
-form label {
-  display: block;
-  margin-top: 1.2rem;
-  font-weight: 500;
-}
-
-form input,
-form select,
-form button {
+input, select, button {
   width: 100%;
   padding: 0.8rem;
-  margin-top: 0.5rem;
-  font-size: 1rem;
+  margin-top: 0.8rem;
   border: 1px solid #ccc;
   border-radius: 6px;
 }
-
-form button {
+button {
   background-color: #0077b6;
   color: white;
   border: none;
-  margin-top: 1.5rem;
-  font-weight: 600;
   cursor: pointer;
-  transition: background 0.3s;
 }
-
-form button:hover {
+button:hover {
   background-color: #005f8c;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 2rem;
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-
-table th, table td {
-  padding: 1rem;
-  border-bottom: 1px solid #eee;
-  text-align: left;
-}
-
-table th {
-  background-color: #e1ecf4;
-  color: #333;
-  font-weight: 600;
-}
-
-a {
-  color: #0077b6;
-  text-decoration: none;
-}
-
-a:hover {
-  text-decoration: underline;
-}
-
-pre {
-  background: #f1f1f1;
-  padding: 1rem;
-  border-radius: 6px;
-  white-space: pre-wrap;
-}
-
-@media (max-width: 768px) {
-  body {
-    padding: 1rem;
-  }
-
-  form {
-    padding: 1.5rem;
-  }
-
-  table th, table td {
-    padding: 0.8rem;
-    font-size: 0.9rem;
-  }
 }

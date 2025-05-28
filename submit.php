@@ -2,7 +2,11 @@
 require 'config.php';
 require 'functions.php';
 
-// Nettoyage et récupération des données du formulaire
+// Activation des erreurs (à désactiver en production)
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+// Sécurité : nettoyage des données
 $data = [
     'nom'             => clean($_POST['nom'] ?? ''),
     'prenom'          => clean($_POST['prenom'] ?? ''),
@@ -14,48 +18,47 @@ $data = [
     'moyen_transport' => $_POST['moyen_transport'] ?? '',
     'transport_id'    => clean($_POST['transport_id'] ?? ''),
     'compagnie'       => clean($_POST['compagnie'] ?? ''),
-    'suivi_token'     => generateToken()
+    'etat'            => 'prévu',
+    'retard_info'     => '',
+    'suivi_token'     => generateToken(32),
 ];
 
-// Validation minimale
-if (!$data['email'] || !$data['nom'] || !$data['prenom']) {
-    die("❌ Données incomplètes.");
+// Auto-remplissage via API pour les vols
+if ($data['moyen_transport'] === 'avion' && !empty($data['transport_id'])) {
+    $flight = getFlightDetails($data['transport_id']);
+    if ($flight) {
+        $data['lieu_depart']  = $flight['from'];
+        $data['lieu_arrivee'] = $flight['to'];
+        $data['retard_info']  = "Départ prévu : " . $flight['from_time'] .
+            "\nArrivée prévue : " . $flight['to_time'] .
+            "\nRetard estimé : " . $flight['delay'] . " min" .
+            "\nStatut : " . $flight['status'];
+        $data['etat'] = ($flight['status'] === 'delayed') ? 'en retard' : 'prévu';
+    }
 }
 
-// Enregistrement en base de données
-$stmt = $pdo->prepare("
-    INSERT INTO trajets (
-        nom, prenom, email, lieu_depart, lieu_arrivee,
-        date_depart, date_arrivee, moyen_transport,
-        transport_id, compagnie, suivi_token
-    ) VALUES (
-        :nom, :prenom, :email, :lieu_depart, :lieu_arrivee,
-        :date_depart, :date_arrivee, :moyen_transport,
-        :transport_id, :compagnie, :suivi_token
-    )
-");
+// Préparation requête
+$sql = "INSERT INTO trajets 
+(nom, prenom, email, lieu_depart, lieu_arrivee, date_depart, date_arrivee, moyen_transport, transport_id, compagnie, etat, retard_info, suivi_token)
+VALUES (:nom, :prenom, :email, :lieu_depart, :lieu_arrivee, :date_depart, :date_arrivee, :moyen_transport, :transport_id, :compagnie, :etat, :retard_info, :suivi_token)";
 
+$stmt = $pdo->prepare($sql);
 $stmt->execute($data);
 
-// Génération du lien de suivi
-$lien = "http://192.168.0.210/suivi.php?token={$data['suivi_token']}";
-
-// Envoi d’un e-mail de confirmation au volontaire
-$message = <<<MSG
-Bonjour {$data['prenom']},
-
-Merci d’avoir renseigné ton trajet. Tu peux le suivre à tout moment via le lien suivant :
-
-$lien
-
-Cordialement,
-L’équipe SVI
-MSG;
-
-mail($data['email'], "📍 Suivi de ton trajet volontaire", $message);
-
-// Message de confirmation
-echo "<p>✅ Ton trajet a bien été enregistré.</p>";
-echo "<p>📍 Lien de suivi : <a href='$lien'>$lien</a></p>";
-echo "<p>✉️ Un e-mail t’a été envoyé avec ce lien.</p>";
+// Affichage lien de suivi
+$suivi_url = "http://" . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . "/suivi.php?token=" . $data['suivi_token'];
 ?>
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Trajet enregistré</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <h2>✅ Ton trajet a bien été enregistré !</h2>
+  <p>Tu peux suivre ta progression ici :</p>
+  <p><a href="<?= $suivi_url ?>"><?= $suivi_url ?></a></p>
+</body>
+</html>

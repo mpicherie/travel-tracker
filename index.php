@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Déclaration de trajet - SVI</title>
+  <title>Déclaration de trajet</title>
   <link rel="stylesheet" href="assets/style.css">
   <script>
     function toggleTransportFields() {
@@ -12,68 +12,68 @@
       document.getElementById('compagnie_field').style.display =
         (type === 'train') ? 'block' : 'none';
     }
+
+    function fetchFlightData() {
+      const flightNumber = document.getElementById('transport_id').value;
+      if (!flightNumber) {
+        alert("Merci d’entrer un numéro de vol.");
+        return;
+      }
+
+      fetch('api_vol.php?flight=' + encodeURIComponent(flightNumber))
+        .then(res => res.json())
+        .then(data => {
+          if (data.from && data.to) {
+            document.getElementById('lieu_depart').value = data.from;
+            document.getElementById('lieu_arrivee').value = data.to;
+            alert("Trajet trouvé : " + data.from + " → " + data.to);
+          } else {
+            alert("Vol introuvable ou erreur API.");
+          }
+        })
+        .catch(err => {
+          alert("Erreur de récupération du vol.");
+          console.error(err);
+        });
+    }
   </script>
 </head>
 <body>
   <h2>Déclare ton trajet</h2>
-
   <form method="POST" action="submit.php">
-    <label>Nom :
-      <input name="nom" placeholder="Ton nom" required>
-    </label>
-
-    <label>Prénom :
-      <input name="prenom" placeholder="Ton prénom" required>
-    </label>
-
-    <label>Email :
-      <input type="email" name="email" placeholder="exemple@email.com" required>
-    </label>
-
-    <label>Lieu de départ :
-      <input name="lieu_depart" required>
-    </label>
-
-    <label>Lieu d’arrivée :
-      <input name="lieu_arrivee" required>
-    </label>
-
-    <label>Date de départ :
-      <input type="date" name="date_depart" required>
-    </label>
-
-    <label>Date d’arrivée :
-      <input type="date" name="date_arrivee" required>
-    </label>
-
-    <label>Moyen de transport :
-      <select name="moyen_transport" id="transport" onchange="toggleTransportFields()" required>
-        <option value="">-- Choisir --</option>
-        <option value="avion">Avion</option>
-        <option value="train">Train</option>
-        <option value="voiture">Voiture</option>
-      </select>
-    </label>
+    <input name="nom" placeholder="Nom" required>
+    <input name="prenom" placeholder="Prénom" required>
+    <input name="email" type="email" placeholder="Email" required>
 
     <div id="transport_id_field" style="display:none;">
-      <label>Numéro de vol ou de train :
-        <input name="transport_id" placeholder="Ex: AF123 ou TGV8721">
-      </label>
+      <input type="text" name="transport_id" id="transport_id" placeholder="Numéro de vol/train">
+      <button type="button" onclick="fetchFlightData()">Remplir automatiquement</button>
     </div>
+
+    <input name="lieu_depart" id="lieu_depart" placeholder="Lieu de départ">
+    <input name="lieu_arrivee" id="lieu_arrivee" placeholder="Lieu d’arrivée">
+
+    <input type="date" name="date_depart" required>
+    <input type="date" name="date_arrivee" required>
+
+    <select name="moyen_transport" id="transport" onchange="toggleTransportFields()" required>
+      <option value="">-- Choisir transport --</option>
+      <option value="avion">Avion</option>
+      <option value="train">Train</option>
+      <option value="voiture">Voiture</option>
+    </select>
 
     <div id="compagnie_field" style="display:none;">
-      <label>Compagnie ferroviaire :
-        <select name="compagnie">
-          <option value="">-- Choisir la compagnie --</option>
-          <option value="SNCF">SNCF (France)</option>
-          <option value="NS">NS (Pays-Bas)</option>
-          <option value="DB">DB (Allemagne)</option>
-          <option value="iRail">SNCB (Belgique)</option>
-        </select>
-      </label>
+      <select name="compagnie">
+        <option value="">-- Compagnie train --</option>
+        <option value="SNCF">SNCF</option>
+        <option value="NS">NS</option>
+        <option value="DB">DB</option>
+        <option value="iRail">iRail</option>
+      </select>
     </div>
 
-    <button type="submit">Envoyer le trajet</button>
+    <button type="submit">Envoyer</button>
   </form>
 </body>
 </html>

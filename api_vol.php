@@ -1,0 +1,1 @@
+<?php require 'functions.php'; $flight = $_GET['flight'] ?? ''; echo json_encode(getFlightDetails($flight)); ?>
