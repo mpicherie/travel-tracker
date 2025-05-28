@@ -1,7 +1,12 @@
 <?php
 /**
  * Nettoie une chaîne pour éviter les failles XSS
+
  */
+
+file_put_contents('log_api.json', $response);
+
+
 function clean($val) {
     return htmlspecialchars(trim($val), ENT_QUOTES, 'UTF-8');
 }
