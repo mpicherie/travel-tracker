@@ -68,3 +68,35 @@ function getFlightDetails($flightNumber) {
         'status'     => $vol['flight_status'] ?? 'unknown'
     ];
 }
+
+function getFlightsOfDay($flightNumber, $date) {
+    $apiKey = 'd1b2e1cdf243b1ebab47b119a3bd95dc';
+    $url = "http://api.aviationstack.com/v1/flights?access_key=$apiKey&flight_iata=" . urlencode($flightNumber);
+
+    $response = file_get_contents($url);
+    if (!$response) return [];
+
+    $data = json_decode($response, true);
+    if (!isset($data['data']) || empty($data['data'])) return [];
+
+    $vols = [];
+
+    foreach ($data['data'] as $v) {
+        if (!isset($v['departure']['scheduled'])) continue;
+
+        // Filtrer par date exacte (ex : 2025-06-01)
+        if (strpos($v['departure']['scheduled'], $date) !== 0) continue;
+
+        $vols[] = [
+            'from'       => $v['departure']['airport'] ?? '',
+            'to'         => $v['arrival']['airport'] ?? '',
+            'from_time'  => $v['departure']['scheduled'] ?? '',
+            'to_time'    => $v['arrival']['scheduled'] ?? '',
+            'flight_iata'=> $v['flight']['iata'] ?? '',
+            'compagnie'  => $v['airline']['name'] ?? '',
+            'status'     => $v['flight_status'] ?? 'unknown'
+        ];
+    }
+
+    return $vols;
+}

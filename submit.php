@@ -6,6 +6,17 @@ require 'functions.php';
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
+if (isset($_POST['selected_vol'])) {
+    $vol = json_decode(base64_decode($_POST['selected_vol']), true);
+    $_POST['lieu_depart'] = $vol['from'];
+    $_POST['lieu_arrivee'] = $vol['to'];
+    $_POST['date_depart'] = $vol['from_time'];
+    $_POST['date_arrivee'] = $vol['to_time'];
+    $_POST['transport_id'] = $vol['flight_iata'];
+    $_POST['compagnie'] = $vol['compagnie'];
+}
+
+
 // Sécurité : nettoyage des données
 $data = [
     'nom'             => clean($_POST['nom'] ?? ''),

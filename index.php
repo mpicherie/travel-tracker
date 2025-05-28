@@ -1,79 +1,68 @@
+<?php
+require 'functions.php';
+
+$vols = [];
+$flight_iata = $_POST['flight_iata'] ?? '';
+$flight_date = $_POST['flight_date'] ?? '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'rechercher') {
+    if ($flight_iata && $flight_date) {
+        $vols = getFlightsOfDay($flight_iata, $flight_date);
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Déclaration de trajet</title>
+  <title>Travel Tracker</title>
   <link rel="stylesheet" href="assets/style.css">
-  <script>
-    function toggleTransportFields() {
-      const type = document.getElementById('transport').value;
-      document.getElementById('transport_id_field').style.display =
-        (type === 'avion' || type === 'train') ? 'block' : 'none';
-      document.getElementById('compagnie_field').style.display =
-        (type === 'train') ? 'block' : 'none';
-    }
-
-    function fetchFlightData() {
-      const flightNumber = document.getElementById('transport_id').value;
-      if (!flightNumber) {
-        alert("Merci d’entrer un numéro de vol.");
-        return;
-      }
-
-      fetch('api_vol.php?flight=' + encodeURIComponent(flightNumber))
-        .then(res => res.json())
-        .then(data => {
-          if (data.from && data.to) {
-            document.getElementById('lieu_depart').value = data.from;
-            document.getElementById('lieu_arrivee').value = data.to;
-            alert("Trajet trouvé : " + data.from + " → " + data.to);
-          } else {
-            alert("Vol introuvable ou erreur API.");
-          }
-        })
-        .catch(err => {
-          alert("Erreur de récupération du vol.");
-          console.error(err);
-        });
-    }
-  </script>
 </head>
 <body>
-  <h2>Déclare ton trajet</h2>
-  <form method="POST" action="submit.php">
-    <input name="nom" placeholder="Nom" required>
-    <input name="prenom" placeholder="Prénom" required>
-    <input name="email" type="email" placeholder="Email" required>
+  <h2>🧳 Enregistrement de trajet volontaire</h2>
 
-    <div id="transport_id_field" style="display:none;">
-      <input type="text" name="transport_id" id="transport_id" placeholder="Numéro de vol/train">
-      <button type="button" onclick="fetchFlightData()">Remplir automatiquement</button>
-    </div>
+  <form method="POST">
+    <label>Numéro de vol :</label>
+    <input type="text" name="flight_iata" required value="<?= htmlspecialchars($flight_iata) ?>">
 
-    <input name="lieu_depart" id="lieu_depart" placeholder="Lieu de départ">
-    <input name="lieu_arrivee" id="lieu_arrivee" placeholder="Lieu d’arrivée">
+    <label>Date du vol :</label>
+    <input type="date" name="flight_date" required value="<?= htmlspecialchars($flight_date) ?>">
 
-    <input type="date" name="date_depart" required>
-    <input type="date" name="date_arrivee" required>
-
-    <select name="moyen_transport" id="transport" onchange="toggleTransportFields()" required>
-      <option value="">-- Choisir transport --</option>
-      <option value="avion">Avion</option>
-      <option value="train">Train</option>
-      <option value="voiture">Voiture</option>
-    </select>
-
-    <div id="compagnie_field" style="display:none;">
-      <select name="compagnie">
-        <option value="">-- Compagnie train --</option>
-        <option value="SNCF">SNCF</option>
-        <option value="NS">NS</option>
-        <option value="DB">DB</option>
-        <option value="iRail">iRail</option>
-      </select>
-    </div>
-
-    <button type="submit">Envoyer</button>
+    <input type="hidden" name="action" value="rechercher">
+    <button type="submit">Rechercher ce vol</button>
   </form>
+
+  <?php if (!empty($vols)): ?>
+    <h3>✈️ Vols trouvés pour le <?= htmlspecialchars($flight_date) ?></h3>
+
+    <form method="POST" action="submit.php">
+      <input type="hidden" name="moyen_transport" value="avion">
+
+      <label>Choisir le vol :</label>
+      <select name="selected_vol" required>
+        <?php foreach ($vols as $v): ?>
+          <option value="<?= base64_encode(json_encode($v)) ?>">
+            <?= $v['flight_iata'] ?> – <?= $v['from'] ?> → <?= $v['to'] ?>
+            (<?= substr($v['from_time'], 11, 5) ?> → <?= substr($v['to_time'], 11, 5) ?>)
+            [<?= ucfirst($v['status']) ?>]
+          </option>
+        <?php endforeach; ?>
+      </select>
+
+      <label>Nom :</label>
+      <input type="text" name="nom" required>
+
+      <label>Prénom :</label>
+      <input type="text" name="prenom" required>
+
+      <label>Email :</label>
+      <input type="email" name="email" required>
+
+      <button type="submit">Valider ce trajet</button>
+    </form>
+  <?php elseif ($_SERVER['REQUEST_METHOD'] === 'POST'): ?>
+    <p>❌ Aucun vol trouvé pour ce numéro et cette date.</p>
+  <?php endif; ?>
 </body>
 </html>
