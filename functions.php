@@ -18,47 +18,40 @@ function generateToken($length = 32) {
  */
 function getFlightDetails($flight_number) {
     $api_key = 'd1b2e1cdf243b1ebab47b119a3bd95dc'; // ← Mets ta clé API AviationStack ici
-    if (!$api_key) return null;
+    $url = "http://api.aviationstack.com/v1/flights?access_key=$apiKey&flight_iata=" . urlencode($flightNumber);
 
-    $url = "http://api.aviationstack.com/v1/flights?access_key=$api_key&flight_iata=" . urlencode($flight_number);
-    $response = @file_get_contents($url);
+    $response = file_get_contents($url);
     if (!$response) return null;
 
     $data = json_decode($response, true);
-    if (!isset($data['data'][0])) return null;
+    if (!isset($data['data']) || empty($data['data'])) return null;
 
-    $flight = $data['data'][0];
+    // On cherche le vol le plus récent et fiable
+    foreach ($data['data'] as $vol) {
+        // Filtrer par date du jour si possible
+        $date_depart = $vol['departure']['scheduled'];
+        $today = date('Y-m-d');
+        if (strpos($date_depart, $today) === false) continue;
+
+        return [
+            'from'       => $vol['departure']['airport'] ?? '',
+            'to'         => $vol['arrival']['airport'] ?? '',
+            'from_time'  => $vol['departure']['scheduled'] ?? '',
+            'to_time'    => $vol['arrival']['scheduled'] ?? '',
+            'delay'      => $vol['departure']['delay'] ?? 0,
+            'status'     => $vol['flight_status'] ?? 'unknown'
+        ];
+    }
+
+    // Fallback si aucun vol du jour trouvé
+    $vol = $data['data'][0];
 
     return [
-        'from'       => $flight['departure']['airport'] ?? '',
-        'to'         => $flight['arrival']['airport'] ?? '',
-        'from_code'  => $flight['departure']['iata'] ?? '',
-        'to_code'    => $flight['arrival']['iata'] ?? '',
-        'from_time'  => $flight['departure']['scheduled'] ?? '',
-        'to_time'    => $flight['arrival']['scheduled'] ?? '',
-        'delay'      => $flight['departure']['delay'] ?? 0,
-        'airline'    => $flight['airline']['name'] ?? '',
-        'status'     => $flight['flight_status'] ?? '',
-        'raw'        => $flight // pour logs ou analyse complète
+        'from'       => $vol['departure']['airport'] ?? '',
+        'to'         => $vol['arrival']['airport'] ?? '',
+        'from_time'  => $vol['departure']['scheduled'] ?? '',
+        'to_time'    => $vol['arrival']['scheduled'] ?? '',
+        'delay'      => $vol['departure']['delay'] ?? 0,
+        'status'     => $vol['flight_status'] ?? 'unknown'
     ];
 }
-
-/**
- * Récupère les infos de retard d’un train (exemples fictifs)
- */
-function getTrainDelayInfo($train_number, $company) {
-    // Tu peux remplacer cette logique avec un appel à une vraie API selon la compagnie
-    switch (strtolower($company)) {
-        case 'sncf':
-            return "Retard inconnu - API SNCF non connectée.";
-        case 'ns':
-            return "Retard inconnu - API NS non connectée.";
-        case 'db':
-            return "Retard inconnu - API DB non connectée.";
-        case 'irail':
-            return "Retard inconnu - API iRail (Belgique) non intégrée.";
-        default:
-            return "Compagnie non reconnue.";
-    }
-}
-?>
